@@ -7,6 +7,7 @@ using TechstarTest.Infrastructure.Caching;
 using TechstarTest.Infrastructure.Data;
 using TechstarTest.Infrastructure.Exceptions;
 using TechstarTest.Infrastructure.Notifications;
+using Microsoft.AspNetCore.Mvc.NewtonsoftJson;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddExceptionHandler<ValidationExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
+
 builder.Services.AddOpenApi();
 builder.Services.AddMediatR(cfg =>
 {

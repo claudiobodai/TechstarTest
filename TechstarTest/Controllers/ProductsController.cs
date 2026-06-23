@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using TechstarTest.Features.Products;
 using TechstarTest.Infrastructure.Caching;
@@ -32,6 +33,33 @@ public class ProductsController : ControllerBase
         if (product is null) return NotFound();
         return Ok(product);
     }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductCommand command)
+    {
+        if (id != command.Id)
+            return BadRequest("L'id nell'URL non corrisponde all'id nel body.");
+
+        var updated = await _mediator.Send(command);
+        if (!updated) return NotFound();
+
+        return NoContent(); 
+    }
+
+    [HttpPatch("{id:int}")]
+    public async Task<IActionResult> PatchProduct(
+       int id,
+       [FromBody] JsonPatchDocument<PatchProductDto> patchDocument)
+    {
+        if (patchDocument is null)
+            return BadRequest("Il documento patch non può essere null.");
+
+        var updated = await _mediator.Send(new PatchProductCommand(id, patchDocument));
+        if (!updated) return NotFound();
+
+        return NoContent();
+    }
+
 
     [HttpGet("cache/metrics")]
     public IActionResult GetCacheMetricsEndpoint()
