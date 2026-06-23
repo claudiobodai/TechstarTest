@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <Folder Include="Controllers\" />
-    <Folder Include="Features\Products\" />
+    <Folder Include="Data\" />
   </ItemGroup>
 
 </Project>
