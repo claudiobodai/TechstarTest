@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TechstarTest.Features.Products;
+using TechstarTest.Infrastructure.Caching;
 
 namespace TechstarTest.Controllers;
 
@@ -9,10 +10,12 @@ namespace TechstarTest.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly ICacheService _cache;
 
-    public ProductsController(IMediator mediator)
+    public ProductsController(IMediator mediator , ICacheService cache)
     {
         _mediator = mediator;
+        _cache = cache;
     }
 
     [HttpPost]
@@ -28,5 +31,17 @@ public class ProductsController : ControllerBase
         var product = await _mediator.Send(new GetProductQuery(id));
         if (product is null) return NotFound();
         return Ok(product);
+    }
+
+    [HttpGet("cache/metrics")]
+    public IActionResult GetCacheMetricsEndpoint()
+    {
+        var metrics = _cache.GetCacheMetrics(); 
+        return Ok(new
+        {
+            hits = metrics.Hits,
+            misses = metrics.Misses,
+            hitRatio = metrics.HitRatio.ToString("P1")
+        });
     }
 }
