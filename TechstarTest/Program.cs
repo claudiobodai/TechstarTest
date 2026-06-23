@@ -4,6 +4,7 @@ using TechstarTest.Behaviors;
 using TechstarTest.Features.Products.Notifications;
 using TechstarTest.Infrastructure.Data;
 using TechstarTest.Infrastructure.Exceptions;
+using TechstarTest.Infrastructure.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +33,22 @@ builder.Services.AddScoped<IProductNotificationService>(sp =>
         sp.GetRequiredService<ProductNotificationService>(),   
         sp.GetRequiredService<ILogger<LoggingProductNotificationDecorator>>()
     ));
+
+builder.Services.AddScoped<EmailSender>();
+builder.Services.AddScoped<SmsSender>();
+builder.Services.AddScoped<PushSender>();
+
+builder.Services.AddScoped<INotificationFactory>(sp =>
+{
+    var registry = new Dictionary<string, Func<INotificationSender>>
+    {
+        ["email"] = () => sp.GetRequiredService<EmailSender>(),
+        ["sms"] = () => sp.GetRequiredService<SmsSender>(),
+        ["push"] = () => sp.GetRequiredService<PushSender>(),  
+    };
+
+    return new NotificationFactory(registry);
+});
 
 var app = builder.Build();
 

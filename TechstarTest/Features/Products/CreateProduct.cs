@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using TechstarTest.Domain.Entities;
 using TechstarTest.Features.Products.Notifications;
 using TechstarTest.Infrastructure.Data;
+using TechstarTest.Infrastructure.Notifications;
 
 namespace TechstarTest.Features.Products;
 
@@ -56,16 +57,22 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 public class ProductCreatedEventHandler : INotificationHandler<ProductCreatedEvent>
 {
     private readonly ILogger<ProductCreatedEventHandler> _logger;
+    private readonly INotificationFactory _notificationFactory;
 
-    public ProductCreatedEventHandler(ILogger<ProductCreatedEventHandler> logger)
+
+    public ProductCreatedEventHandler(ILogger<ProductCreatedEventHandler> logger, INotificationFactory notificationFactory)
     {
         _logger = logger;
-    }
+        _notificationFactory = notificationFactory;
+    } 
 
     public async Task Handle(ProductCreatedEvent notification, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Evento di Dominio: Creato con successo il prodotto '{ProductName}' con ID {ProductId}",
             notification.Name, notification.ProductId);
+
+        var sender = _notificationFactory.Create("email");
+        await sender.Send($"Nuovo prodotto disponibile: {notification.Name}");
 
         await Task.CompletedTask;
     }
