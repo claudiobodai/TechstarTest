@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using TechstarTest.Domain.Entities;
+using TechstarTest.Infrastructure.Data;
 
 namespace TechstarTest.Features.Products;
 
@@ -22,23 +24,27 @@ public record ProductCreatedEvent(int ProductId, string Name) : INotification;
 
 public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand, int>
 {
-   private readonly IMediator mediator;
+    private readonly IMediator _mediator;
+    private readonly ApplicationDbContext _db;
 
-    // Db context 
-
-    public CreateProductCommandHandler(IMediator mediator)
+    public CreateProductCommandHandler(IMediator mediator, ApplicationDbContext db)
     {
-        this.mediator = mediator;
+        _mediator = mediator;
+        _db = db;
+
     }
 
     public async Task<int> Handle(CreateProductCommand request, CancellationToken cancellationToken)
     {
-       
-        int newProductId = new Random().Next(1, 1000); 
+        var product = new Product(request.Name, request.Price);
 
-        await mediator.Publish(new ProductCreatedEvent(newProductId, request.Name), cancellationToken);
-       
-        return newProductId;
+        _db.Products.Add(product);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await _mediator.Publish(new ProductCreatedEvent(product.Id, product.Name), cancellationToken);
+        
+        return product.Id;
     }
 }
 

@@ -1,8 +1,13 @@
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 using TechstarTest.Behaviors;
+using TechstarTest.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
