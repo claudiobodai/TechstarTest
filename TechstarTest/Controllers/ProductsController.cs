@@ -21,4 +21,12 @@ public class ProductsController : ControllerBase
         var productId = await _mediator.Send(command);
         return Created($"/api/products/{productId}", new { Id = productId });
     }
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetProduct(int id)
+    {
+        var product = await _mediator.Send(new GetProductQuery(id));
+        if (product is null) return NotFound();
+        return Ok(product);
+    }
 }

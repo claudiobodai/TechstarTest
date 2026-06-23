@@ -1,7 +1,9 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using TechstarTest.Behaviors;
 using TechstarTest.Features.Products.Notifications;
+using TechstarTest.Infrastructure.Caching;
 using TechstarTest.Infrastructure.Data;
 using TechstarTest.Infrastructure.Exceptions;
 using TechstarTest.Infrastructure.Notifications;
@@ -26,6 +28,10 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    ConnectionMultiplexer.Connect("localhost:6379"));
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 builder.Services.AddScoped<ProductNotificationService>();
 builder.Services.AddScoped<IProductNotificationService>(sp =>
