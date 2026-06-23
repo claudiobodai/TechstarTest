@@ -12,22 +12,27 @@ public class GetProductQueryHandler : IRequestHandler<GetProductQuery, ProductDt
 {
     private readonly ApplicationDbContext _db;
     private readonly ICacheService _cache;
+    private readonly ILogger<GetProductQueryHandler> _logger;
     private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(5);
 
-    public GetProductQueryHandler(ApplicationDbContext db, ICacheService cache)
+    public GetProductQueryHandler(ApplicationDbContext db, ICacheService cache, ILogger<GetProductQueryHandler> logger)
     {
         _db = db;
         _cache = cache;
+        _logger = logger;
     }
     public async Task<ProductDto?> Handle(GetProductQuery request, CancellationToken cancellationToken)
     {
         var cacheKey = $"Product: {request.ProductId}";
         
-        // cerca in cache
         var cached = await _cache.GetAsync<ProductDto>(cacheKey, cancellationToken);
-        if (cached is not null) return cached;
+        if (cached is not null)
+        {
+            _logger.LogInformation("Product {ProductId} found in cache.", request.ProductId);
+            return cached;
+        }
 
-        // se non trovato in cache, cerca nel database
+        _logger.LogInformation("Product {ProductId} not found in cache. Querying database.", request.ProductId);
         var product = await _db.Products
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == request.ProductId, cancellationToken);
@@ -36,8 +41,8 @@ public class GetProductQueryHandler : IRequestHandler<GetProductQuery, ProductDt
 
         var dto = new ProductDto(product.Id, product.Name, product.Price);
 
-        // scrivi in cache
         await _cache.SetAsync(cacheKey, dto, CacheExpiry, cancellationToken);
+        _logger.LogInformation("Product {ProductId} cached for {CacheExpiry} minutes.", request.ProductId, CacheExpiry.TotalMinutes);
 
         return dto;
     }
