@@ -81,7 +81,7 @@ public class PatchProductCommandHandler : IRequestHandler<PatchProductCommand, b
 
         await _db.SaveChangesAsync(cancellationToken);
 
-        await _cache.RemoveAsync($"Product:{request.Id}", cancellationToken);
+        await _cache.RemoveAsync($"product:{request.Id}", cancellationToken);
         return true;
     }
 }
