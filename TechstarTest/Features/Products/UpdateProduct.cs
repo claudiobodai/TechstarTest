@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using TechstarTest.Infrastructure.Caching;
 using TechstarTest.Infrastructure.Data;
 
 namespace TechstarTest.Features.Products;
@@ -52,9 +53,13 @@ public class PatchProductDto
 public class PatchProductCommandHandler : IRequestHandler<PatchProductCommand, bool>
 {
     private readonly ApplicationDbContext _db;
+    private readonly ICacheService _cache;
 
-    public PatchProductCommandHandler(ApplicationDbContext db) => _db = db;
-
+    public PatchProductCommandHandler(ApplicationDbContext db, ICacheService cache)
+    {
+        _db = db;
+        _cache = cache; 
+    }
     public async Task<bool> Handle(PatchProductCommand request, CancellationToken cancellationToken)
     {
         var product = await _db.Products.FindAsync([request.Id], cancellationToken);
@@ -75,6 +80,8 @@ public class PatchProductCommandHandler : IRequestHandler<PatchProductCommand, b
         product.Price = dto.Price;
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        await _cache.RemoveAsync($"Product:{request.Id}", cancellationToken);
         return true;
     }
 }
