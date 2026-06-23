@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using TechstarTest.Behaviors;
+using TechstarTest.Features.Products.Notifications;
 using TechstarTest.Infrastructure.Data;
 using TechstarTest.Infrastructure.Exceptions;
 
@@ -24,6 +25,13 @@ builder.Services.AddMediatR(cfg =>
     cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
 });
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+builder.Services.AddScoped<ProductNotificationService>();
+builder.Services.AddScoped<IProductNotificationService>(sp =>
+    new LoggingProductNotificationDecorator(
+        sp.GetRequiredService<ProductNotificationService>(),   
+        sp.GetRequiredService<ILogger<LoggingProductNotificationDecorator>>()
+    ));
 
 var app = builder.Build();
 

@@ -2,6 +2,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using TechstarTest.Domain.Entities;
+using TechstarTest.Features.Products.Notifications;
 using TechstarTest.Infrastructure.Data;
 
 namespace TechstarTest.Features.Products;
@@ -26,11 +27,13 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 {
     private readonly IMediator _mediator;
     private readonly ApplicationDbContext _db;
+    private readonly IProductNotificationService _notificationService;
 
-    public CreateProductCommandHandler(IMediator mediator, ApplicationDbContext db)
+    public CreateProductCommandHandler(IMediator mediator, ApplicationDbContext db, IProductNotificationService notificationService)
     {
         _mediator = mediator;
         _db = db;
+        _notificationService = notificationService;
 
     }
 
@@ -41,6 +44,8 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
         _db.Products.Add(product);
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        await _notificationService.NotifyProductCreatedAsync(product.Id, product.Name);
 
         await _mediator.Publish(new ProductCreatedEvent(product.Id, product.Name), cancellationToken);
         
